@@ -1,0 +1,8 @@
+{
+  "domain": "xbee_bridge",
+  "name": "XBee Bridge",
+  "documentation": "https://github.com/yourusername/mqtt-xbee-bridge",
+  "dependencies": [],
+  "codeowners": ["@yourusername"],
+  "requirements": ["paho-mqtt", "xbee"]
+}
