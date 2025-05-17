@@ -1,8 +1,13 @@
 {
-  "domain": "xbee_bridge",
-  "name": "XBee Bridge",
-  "documentation": "https://github.com/yourusername/mqtt-xbee-bridge",
-  "dependencies": [],
-  "codeowners": ["@yourusername"],
-  "requirements": ["paho-mqtt", "xbee"]
+    "domain": "xbee_bridge",
+    "name": "XBee Bridge",
+    "version": "1.0",
+    "documentation": "https://github.com/EugeneS120/XBee2HA",
+    "dependencies": [],
+    "codeowners": ["@EugeneS120"],
+    "requirements": [
+        "pyserial",
+        "digi-xbee",
+        "paho-mqtt"
+    ]
 }
