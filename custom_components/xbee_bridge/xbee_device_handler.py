@@ -157,3 +157,21 @@ class XBeeDeviceHandler:
             self.disable_io_sampling()
         finally:
             self.close_device()
+
+    def run(self):
+        """
+        Opens and configures the device, registers the sample callback, and keeps the handler running.
+        """
+        self.open_device()
+        self.configure_device()
+        self.register_io_sample_callback()
+        # Keep running until stopped externally
+        import time
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.disable_io_sampling()
+            self.close_device()
