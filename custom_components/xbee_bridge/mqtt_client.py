@@ -5,6 +5,11 @@ _LOGGER = logging.getLogger(__name__)
 
 class MQTTClient:
     def __init__(self, broker, port, username=None, password=None):
+        try:
+            # your init
+            _LOGGER.warning("MQTTClient initialized")
+        except Exception as e:
+            _LOGGER.error("MQTTClient __init__ failed: %s", e)
         self.broker = broker
         self.port = port
         self.username = username
@@ -21,6 +26,7 @@ class MQTTClient:
             _LOGGER.error("Failed to connect to MQTT broker: %s", e)
 
     def publish_constant_test(self):
+        _LOGGER.warning("Entered publish_constant_test()")
         self.connect()
         self.client.publish("home/sensors/xbee/xbee_status", "TEST: XBEE module online")
         self.client.publish("home/sensors/xbee/sample_time", "2025-05-23T20:00:00")
