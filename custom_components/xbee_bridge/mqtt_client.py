@@ -4,10 +4,14 @@ import paho.mqtt.client as mqtt
 _LOGGER = logging.getLogger(__name__)
 
 class MQTTClient:
-    def __init__(self, broker, port):
+    def __init__(self, broker, port, username=None, password=None):
         self.broker = broker
         self.port = port
+        self.username = username
+        self.password = password
         self.client = mqtt.Client()
+        if self.username:
+            self.client.username_pw_set(self.username, self.password)
 
     def connect(self):
         try:
@@ -18,11 +22,10 @@ class MQTTClient:
 
     def publish_constant_test(self):
         self.connect()
-        # Publish constant test values
         self.client.publish("home/sensors/xbee/xbee_status", "TEST: XBEE module online")
         self.client.publish("home/sensors/xbee/sample_time", "2025-05-23T20:00:00")
         self.client.publish("home/sensors/xbee/dio2_ad2", "1234")
         self.client.publish("home/sensors/xbee/dio3_ad3", "HIGH")
         _LOGGER.info("Published constant test values to MQTT topics.")
-        # Disconnect for clean exit
         self.client.disconnect()
+
