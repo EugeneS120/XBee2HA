@@ -19,6 +19,13 @@ class XBeeDeviceHandler:
             "dio2_ad2": None,
             "dio3_ad3": None,
         }
+        self.data_callback = None  # Callback for new data
+
+    def set_data_callback(self, callback):
+        """
+        Sets a callback function that will be called with a dictionary of parsed sensor data.
+        """
+        self.data_callback = callback
 
     def open_device(self):
         """Open the XBee device and fetch device information."""
@@ -91,7 +98,7 @@ class XBeeDeviceHandler:
                         self.data["dio3_ad3"] = value
                     _LOGGER.info("%s: %s", line, value)
 
-            # Parse analog values
+                # Parse analog values
                 analog_matches = re.findall(r'IOLine\.([A-Z0-9_]+):\s*(\d+)', sample_str)
                 for line, value_str in analog_matches:
                     if line == "DIO2_AD2":
@@ -103,6 +110,12 @@ class XBeeDeviceHandler:
                 # Save the sample time
                 self.data["sample_time"] = datetime.now().isoformat()
                 _LOGGER.info("Sample time: %s", self.data["sample_time"])
+                # Call the external data callback if set
+                if self.data_callback:
+                    try:
+                        self.data_callback(self.data.copy())
+                    except Exception as e:
+                        _LOGGER.error("Error in data_callback: %s", e)
             except Exception as e:
                 _LOGGER.error("Error processing I/O sample: %s", e)
 
@@ -139,6 +152,7 @@ class XBeeDeviceHandler:
             self.configure_device()
             self.register_io_sample_callback()
             _LOGGER.info("Waiting for I/O sample...")
+            import time
             time.sleep(5)  # Wait for a sample to be received
             self.disable_io_sampling()
         finally:
