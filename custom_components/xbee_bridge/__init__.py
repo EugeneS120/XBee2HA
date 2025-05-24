@@ -14,6 +14,11 @@ async def async_setup(hass, config):
     username = conf.get("mqtt_user")
     password = conf.get("mqtt_password")
     mqtt = MQTTClient(broker, port, username, password)
-    mqtt.publish_constant_test()
+
+    async def handle_test_publish(call):
+        _LOGGER.warning("xbee_bridge: Test publish service called")
+        await hass.async_add_executor_job(mqtt.publish_constant_test)
+
+    hass.services.async_register("xbee_bridge", "test_publish", handle_test_publish)
 
     return True

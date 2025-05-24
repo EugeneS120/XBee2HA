@@ -28,10 +28,9 @@ class MQTTClient:
     def publish_constant_test(self):
         _LOGGER.warning("Entered publish_constant_test()")
         self.connect()
-        self.client.publish("home/sensors/xbee/xbee_status", "TEST: XBEE module online")
-        self.client.publish("home/sensors/xbee/sample_time", "2025-05-23T20:00:00")
-        self.client.publish("home/sensors/xbee/dio2_ad2", "1234")
-        self.client.publish("home/sensors/xbee/dio3_ad3", "HIGH")
-        _LOGGER.info("Published constant test values to MQTT topics.")
+        self.client.publish("home/sensors/xbee/xbee_status", "TEST: XBEE module online", retain=True)
+        self.client.publish("home/sensors/xbee/sample_time", "2025-05-23T20:00:00", retain=True)
+        self.client.publish("home/sensors/xbee/dio2_ad2", "1234", retain=True)
+        self.client.publish("home/sensors/xbee/dio3_ad3", "HIGH", retain=True)
+        _LOGGER.info("Published constant test values to MQTT topics.", retain=True)
         self.client.disconnect()
-
