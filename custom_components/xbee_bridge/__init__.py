@@ -11,7 +11,9 @@ def start_xbee_listener(handler, stop_event):
     # This will run in a background thread
     _LOGGER.warning("xbee_bridge: start_xbee_listener called N1")
     try:
+        _LOGGER.warning("xbee_bridge: about to call handler.open_device() N2")
         handler.open_device()
+        _LOGGER.warning("xbee_bridge: handler.open_device() succeeded N3")
         handler.configure_device()
         handler.register_io_sample_callback()
         _LOGGER.info("XBee listener started, running until stopped...")
@@ -19,16 +21,16 @@ def start_xbee_listener(handler, stop_event):
             import time
             time.sleep(1)
     except Exception as e:
-        _LOGGER.error(f"XBee listener stopped: {e}")
+        _LOGGER.error(f"XBee listener stopped: {e}", exc_info=True)
     finally:
         try:
             handler.disable_io_sampling()
         except Exception as e:
-            _LOGGER.error(f"Failed to disable I/O sampling: {e}")
+            _LOGGER.error(f"Failed to disable I/O sampling: {e}", exc_info=True)
         try:
             handler.close_device()
         except Exception as e:
-            _LOGGER.error(f"Failed to close device: {e}")
+            _LOGGER.error(f"Failed to close device: {e}", exc_info=True)
 
 async def async_setup(hass, config):
     _LOGGER.info("XBee Bridge initializing...")

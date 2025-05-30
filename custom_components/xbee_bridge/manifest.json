@@ -1,7 +1,7 @@
 {
     "domain": "xbee_bridge",
     "name": "XBee Bridge",
-    "version": "0.2.10",
+    "version": "0.2.11",
     "documentation": "https://github.com/EugeneS120/XBee2HA",
     "dependencies": [],
     "codeowners": ["@EugeneS120"],
