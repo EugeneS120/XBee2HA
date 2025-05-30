@@ -109,6 +109,12 @@ async def async_setup(hass, config):
     async def handle_reload(call):
         _LOGGER.warning("xbee_bridge: Reload service called")
         await hass.async_add_executor_job(stop_handler)
+    # Disconnect MQTT client before restarting
+    try:
+        mqtt.client.disconnect()
+        _LOGGER.info("Disconnected MQTT client.")
+    except Exception as e:
+        _LOGGER.error(f"Error disconnecting MQTT client: {e}")
         handler, thread, stop_event = await hass.async_add_executor_job(start_handler)
         hass.data[DOMAIN]["handler"] = handler
         hass.data[DOMAIN]["thread"] = thread
