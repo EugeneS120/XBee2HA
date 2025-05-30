@@ -71,7 +71,7 @@ async def async_setup(hass, config):
     main_handler = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
     main_handler.set_data_callback(xbee_data_callback)
 
-    thread = threading.Thread(target=start_xbee_listener, args=(main_handler,), daemon=True)
+    thread = threading.Thread(target=start_xbee_listener, args=(main_handler, stop_event), daemon=True)
     thread.start()
 
     # 3. Store the handler for reload/service operations
