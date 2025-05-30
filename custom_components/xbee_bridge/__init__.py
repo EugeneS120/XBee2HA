@@ -20,8 +20,14 @@ def start_xbee_listener(handler, stop_event):
     except Exception as e:
         _LOGGER.error(f"XBee listener stopped: {e}")
     finally:
+        try:
         handler.disable_io_sampling()
+        except Exception as e:
+            _LOGGER.error(f"Failed to disable I/O sampling: {e}")
+        try:
         handler.close_device()
+        except Exception as e:
+            _LOGGER.error(f"Failed to close device: {e}")
 
 async def async_setup(hass, config):
     _LOGGER.info("XBee Bridge initializing...")
@@ -41,9 +47,9 @@ async def async_setup(hass, config):
     async def handle_test_publish(call):
         _LOGGER.warning("xbee_bridge: Test publish service called")
         await hass.async_add_executor_job(mqtt.publish_constant_test)
-    hass.services.async_register("xbee_bridge", "test_publish", handle_test_publish)
+    hass.services.async_register(DOMAIN, "test_publish", handle_test_publish)
 
-    ## Debug mode:
+    ## Debug mode: only send test MQTT messages, skip XBee setup
     if debug_mode:
         _LOGGER.warning("Running in debug_mode: publishing constant test values.")
         await hass.async_add_executor_job(mqtt.publish_constant_test)
@@ -51,15 +57,15 @@ async def async_setup(hass, config):
     ## Real mode: Use XBee device handler
     # 1. Only check device availability here
     try:
-        device = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
-        device.open_device()
-        device.close_device()
+        test_device = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
+        test_device.open_device()
+        test_device.close_device()
         _LOGGER.info("XBee device available and port can be opened/closed")
     except Exception as e:
         _LOGGER.error(f"XBee device unavailable at setup: {e}")
         return False
 
-    # 2. Start the main handler in a background thread (non-blocking!)
+    # 2. XBee data callback
     def xbee_data_callback(data):
         # Called whenever new sensor data is available
         # Publish each value to MQTT
@@ -68,17 +74,7 @@ async def async_setup(hass, config):
             mqtt.client.publish(topic, str(value), retain=True)
             _LOGGER.info(f"Published {key}: {value} to {topic}")
 
-    main_handler = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
-    main_handler.set_data_callback(xbee_data_callback)
-    stop_event = threading.Event()
-    thread = threading.Thread(target=start_xbee_listener, args=(main_handler, stop_event), daemon=True)
-    thread.start()
-
-    # 3. Store the handler for reload/service operations
-    hass.data["xbee_bridge_handler"] = main_handler
-    hass.data["xbee_bridge_thread"] = thread
-
-    # Helper to start thread
+    # 3. Helper to start handler
     def start_handler():
         stop_event = threading.Event()
         handler = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
@@ -87,7 +83,7 @@ async def async_setup(hass, config):
         thread.start()
         return handler, thread, stop_event
 
-    # Helper to stop thread
+    # 4. Helper to stop handler
     def stop_handler():
         stop_event = hass.data[DOMAIN].get("stop_event")
         if stop_event:
@@ -97,7 +93,7 @@ async def async_setup(hass, config):
             thread.join(timeout=5)
         _LOGGER.info("XBee handler stopped.")
 
-    # Store everything in hass.data
+    # 5. Store everything in hass.data
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
@@ -106,6 +102,7 @@ async def async_setup(hass, config):
     hass.data[DOMAIN]["thread"] = thread
     hass.data[DOMAIN]["stop_event"] = stop_event
 
+    # 6. Reload service
     async def handle_reload(call):
         _LOGGER.warning("xbee_bridge: Reload service called")
         await hass.async_add_executor_job(stop_handler)
@@ -115,10 +112,11 @@ async def async_setup(hass, config):
         _LOGGER.info("Disconnected MQTT client.")
     except Exception as e:
         _LOGGER.error(f"Error disconnecting MQTT client: {e}")
-        handler, thread, stop_event = await hass.async_add_executor_job(start_handler)
-        hass.data[DOMAIN]["handler"] = handler
-        hass.data[DOMAIN]["thread"] = thread
-        hass.data[DOMAIN]["stop_event"] = stop_event
+
+        new_handler, new_thread, new_stop_event = await hass.async_add_executor_job(start_handler)
+        hass.data[DOMAIN]["handler"] = new_handler
+        hass.data[DOMAIN]["thread"] = new_thread
+        hass.data[DOMAIN]["stop_event"] = new_stop_event
         _LOGGER.info("xbee_bridge: Reload complete.")
 
     hass.services.async_register(DOMAIN, "reload", handle_reload)
