@@ -63,6 +63,7 @@ async def async_setup(hass, config):
         _LOGGER.info("XBee device available and port can be opened/closed")
     except Exception as e:
         _LOGGER.error(f"XBee device unavailable at setup: {e}")
+        _LOGGER.error("xbee_bridge: Returning False from async_setup due to XBee device error")
         return False
 
     # 2. XBee data callback
@@ -121,4 +122,6 @@ async def async_setup(hass, config):
 
     hass.services.async_register(DOMAIN, "reload", handle_reload)
 
+
+    _LOGGER.warning("xbee_bridge: About to return True from async_setup")
     return True
