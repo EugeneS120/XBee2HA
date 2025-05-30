@@ -21,11 +21,11 @@ def start_xbee_listener(handler, stop_event):
         _LOGGER.error(f"XBee listener stopped: {e}")
     finally:
         try:
-        handler.disable_io_sampling()
+            handler.disable_io_sampling()
         except Exception as e:
             _LOGGER.error(f"Failed to disable I/O sampling: {e}")
         try:
-        handler.close_device()
+            handler.close_device()
         except Exception as e:
             _LOGGER.error(f"Failed to close device: {e}")
 
