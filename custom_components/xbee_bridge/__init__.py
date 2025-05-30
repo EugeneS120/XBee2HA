@@ -9,6 +9,7 @@ DOMAIN = "xbee_bridge"
 
 def start_xbee_listener(handler, stop_event):
     # This will run in a background thread
+    _LOGGER.warning("xbee_bridge: start_xbee_listener called N1")
     try:
         handler.open_device()
         handler.configure_device()
@@ -77,11 +78,13 @@ async def async_setup(hass, config):
 
     # 3. Helper to start handler
     def start_handler():
+        _LOGGER.warning("xbee_bridge: start_handler called N1")
         stop_event = threading.Event()
         handler = XBeeDeviceHandler(xbee_port, baud_rate, sample_rate_ms)
         handler.set_data_callback(xbee_data_callback)
         thread = threading.Thread(target=start_xbee_listener, args=(handler, stop_event), daemon=True)
         thread.start()
+        _LOGGER.warning("xbee_bridge: start_handler called N2")
         return handler, thread, stop_event
 
     # 4. Helper to stop handler
