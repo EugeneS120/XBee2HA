@@ -19,6 +19,7 @@ def start_xbee_listener(handler, stop_event):
         _LOGGER.info("XBee listener started, running until stopped...")
         while not stop_event.is_set():
             import time
+            _LOGGER.debug("xbee_bridge: listener loop heartbeat")
             time.sleep(1)
     except Exception as e:
         _LOGGER.error(f"XBee listener stopped: {e}", exc_info=True)
@@ -47,6 +48,10 @@ async def async_setup(hass, config):
 
     mqtt = MQTTClient(broker, port, username, password)
 
+    def on_disconnect(client, userdata, rc):
+        _LOGGER.error("MQTT client disconnected with rc=%s", rc)
+    mqtt.client.on_disconnect = on_disconnect
+
     async def handle_test_publish(call):
         _LOGGER.warning("xbee_bridge: Test publish service called")
         await hass.async_add_executor_job(mqtt.publish_constant_test)
@@ -73,6 +78,7 @@ async def async_setup(hass, config):
     def xbee_data_callback(data):
         # Called whenever new sensor data is available
         # Publish each value to MQTT
+        _LOGGER.warning(f"xbee_bridge: Received XBee data: {data}")
         for key, value in data.items():
             topic = f"home/sensors/xbee/{key}"
             mqtt.client.publish(topic, str(value), retain=True)
