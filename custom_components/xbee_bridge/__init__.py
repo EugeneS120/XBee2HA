@@ -5,6 +5,7 @@ from .xbee_device_handler import XBeeDeviceHandler
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.warning("xbee_bridge __init__.py file loaded")
+
 DOMAIN = "xbee_bridge"
 
 def start_xbee_listener(handler, stop_event):
@@ -36,7 +37,7 @@ def start_xbee_listener(handler, stop_event):
 async def async_setup(hass, config):
     _LOGGER.info("XBee Bridge initializing...")
     _LOGGER.warning("xbee_bridge async_setup() called")
-    conf = config.get("xbee_bridge", {})
+    conf = config.get(DOMAIN, {})
     broker = conf.get("mqtt_broker", "localhost")
     port = conf.get("mqtt_port", 1883)
     username = conf.get("mqtt_user")
@@ -46,12 +47,20 @@ async def async_setup(hass, config):
     baud_rate = conf.get("baud_rate", 57600)
     sample_rate_ms = conf.get("sample_rate_ms", 1000)
 
-    mqtt = MQTTClient(broker, port, username, password)
+    # Disconnect and cleanup old client if present
+    if DOMAIN in hass.data and "mqtt_client" in hass.data[DOMAIN]:
+        old_client = hass.data[DOMAIN]["mqtt_client"]
+        old_client.disconnect()
 
-    def on_disconnect(client, userdata, rc):
-        _LOGGER.error("MQTT client disconnected with rc=%s", rc)
-    mqtt.client.on_disconnect = on_disconnect
-    mqtt.client.connect(broker, port)
+    # Create and connect new MQTT client
+    mqtt = MQTTClient(broker, port, username, password)
+    mqtt.connect()
+    hass.data.setdefault(DOMAIN, {})["mqtt_client"] = mqtt
+
+    # def on_disconnect(client, userdata, rc):
+    #     _LOGGER.error("MQTT client disconnected with rc=%s", rc)
+    # mqtt.client.on_disconnect = on_disconnect
+    # mqtt.client.connect(broker, port)
 
     async def handle_test_publish(call):
         _LOGGER.warning("xbee_bridge: Test publish service called")
