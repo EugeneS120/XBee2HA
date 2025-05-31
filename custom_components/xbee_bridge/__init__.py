@@ -19,7 +19,7 @@ def start_xbee_listener(handler, stop_event):
         _LOGGER.info("XBee listener started, running until stopped...")
         while not stop_event.is_set():
             import time
-            _LOGGER.debug("xbee_bridge: listener loop heartbeat")
+            # _LOGGER.debug("xbee_bridge: listener loop heartbeat")
             time.sleep(1)
     except Exception as e:
         _LOGGER.error(f"XBee listener stopped: {e}", exc_info=True)
@@ -51,6 +51,7 @@ async def async_setup(hass, config):
     def on_disconnect(client, userdata, rc):
         _LOGGER.error("MQTT client disconnected with rc=%s", rc)
     mqtt.client.on_disconnect = on_disconnect
+    mqtt.client.connect(broker, port)
 
     async def handle_test_publish(call):
         _LOGGER.warning("xbee_bridge: Test publish service called")
