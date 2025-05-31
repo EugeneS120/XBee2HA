@@ -4,7 +4,7 @@
     "version": "0.2.13",
     "documentation": "https://github.com/EugeneS120/XBee2HA",
     "dependencies": [],
-    "loggers": ["custom_components.xbee_bridge"]
+    "loggers": ["custom_components.xbee_bridge"],
     "codeowners": ["@EugeneS120"],
     "requirements": [
         "pyserial",
