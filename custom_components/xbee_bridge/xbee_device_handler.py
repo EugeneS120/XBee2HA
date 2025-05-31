@@ -3,7 +3,7 @@ from digi.xbee.devices import XBeeDevice, XBee64BitAddress
 from digi.xbee.io import IOLine, IOMode
 import struct
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ class XBeeDeviceHandler:
         try:
             self.device = XBeeDevice(self.port, self.baud_rate)
             self.device.open(force_settings=True)
-            #_LOGGER.info("Device opened successfully on port %s", self.port)
+            # _LOGGER.info("Device opened successfully on port %s", self.port)
             node_id = self.device.get_node_id().strip()
             firmware_bytes = self.device.get_firmware_version()
             version_hex = "".join(f"{b:02x}" for b in firmware_bytes)
@@ -40,12 +40,12 @@ class XBeeDeviceHandler:
             self.data["status"] = status_str
             _LOGGER.info(status_str)
 
-            ## Structured and formatted version
-            #self.data["status_struct"] = {
-            #    "node_id": node_id,
-            #    "firmware_version": version_hex
-            #}
-            #self.data["status"] = f"XBEE module: {node_id}, Firmware version: {version_hex}"
+            # # Structured and formatted version
+            # self.data["status_struct"] = {
+            #     "node_id": node_id,
+            #     "firmware_version": version_hex
+            # }
+            # self.data["status"] = f"XBEE module: {node_id}, Firmware version: {version_hex}"
 
         except Exception as e:
             _LOGGER.error("Failed to open XBee device: %s", e)
@@ -108,7 +108,7 @@ class XBeeDeviceHandler:
                         self.data["dio2_ad2"] = formatted
                     _LOGGER.info(formatted)
                 # Save the sample time
-                self.data["sample_time"] = datetime.now().isoformat()
+                self.data["sample_time"] = datetime.now(timezone.utc).isoformat()
                 _LOGGER.info("Sample time: %s", self.data["sample_time"])
                 # Call the external data callback if set
                 if self.data_callback:
