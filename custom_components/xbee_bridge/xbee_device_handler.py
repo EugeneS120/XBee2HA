@@ -77,6 +77,10 @@ class XBeeDeviceHandler:
             self.device.execute_command("IS")
             _LOGGER.info("IS command sent to request immediate sample")
 
+            # Setting the "NJ" parameter (Node Join) to 0 disables the module from joining any new networks.
+            self.device.execute_command("NJ", 0)
+            _LOGGER.info("NJ command disable the module from joining any new networks")
+
         except Exception as e:
             _LOGGER.error("Failed to configure XBee device: %s", e)
             raise
