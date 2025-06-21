@@ -76,7 +76,7 @@ class XBeeDeviceHandler:
             self.device.set_parameter("SC", b'\x00\x02')  # Set SC to 2 - prevent RF spam
 
             # RF Power Level
-            self.device.set_parameter("PL", 0)  # 0 = -8 dBm - lowest radio power
+            self.device.set_parameter("PL", b'\x00')  # 0 = -8 dBm - lowest radio power
 
             # Apply changes to save the configuration
             self.device.apply_changes()
