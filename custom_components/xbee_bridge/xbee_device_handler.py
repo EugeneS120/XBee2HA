@@ -115,7 +115,8 @@ class XBeeDeviceHandler:
                         value = int(value_str)
                         voltage = (value / 1023) * 3.3  # Assuming a 3.3V reference
                         formatted = f"{line}: {value} (approx. {voltage:.2f}V)"
-                        self.data["dio2_ad2"] = formatted
+                        # self.data["dio2_ad2"] = formatted
+                        self.data["dio2_ad2"] = "{voltage:.2f}V"
                     _LOGGER.info(formatted)
                 # Save the sample time
                 # self.data["sample_time"] = datetime.now(timezone.utc).isoformat()

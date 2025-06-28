@@ -1,7 +1,7 @@
 {
     "domain": "xbee_bridge",
     "name": "XBee Bridge",
-    "version": "0.2.23",
+    "version": "0.2.24",
     "documentation": "https://github.com/EugeneS120/XBee2HA",
     "dependencies": [],
     "loggers": ["custom_components.xbee_bridge"],

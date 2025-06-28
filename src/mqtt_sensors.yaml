@@ -1,0 +1,23 @@
+sensor:
+    # xbee_bridge
+    - name: "XBee Status"
+      state_topic: "home/sensors/xbee/xbee_status"
+      value_template: "{{ value }}"
+      icon: mdi:access-point
+    - name: "XBee Sample Time"
+      state_topic: "home/sensors/xbee/sample_time"
+      value_template: "{{ value }}"
+      device_class: timestamp # For time values, Home Assistant expects ISO8601. Adjust if your format differs.
+    - name: "XBee DIO2 AD2"
+      state_topic: "home/sensors/xbee/dio2_ad2"
+      value_template: "{{ value | float }}"
+      unit_of_measurement: "V"  # Or "%", adjust to your sensor type
+    - name: "XBee DIO3 AD3"
+      state_topic: "home/sensors/xbee/dio3_ad3"
+      value_template: >-
+        {% if value in ['HIGH', '1', 1] %}
+          ON
+        {% else %}
+          OFF
+        {% endif %}
+      icon: mdi:toggle-switch
