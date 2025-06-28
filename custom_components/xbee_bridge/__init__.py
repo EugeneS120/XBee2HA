@@ -20,7 +20,6 @@ def start_xbee_listener(handler, stop_event):
         _LOGGER.info("XBee listener started, running until stopped...")
         while not stop_event.is_set():
             import time
-            # _LOGGER.debug("xbee_bridge: listener loop heartbeat")
             time.sleep(1)
     except Exception as e:
         _LOGGER.error(f"XBee listener stopped: {e}", exc_info=True)
@@ -47,6 +46,9 @@ async def async_setup(hass, config):
     baud_rate = conf.get("baud_rate", 57600)
     sample_rate_ms = conf.get("sample_rate_ms", 1000)
 
+    # Save config for reload use
+    hass.data.setdefault(DOMAIN, {})["config"] = conf
+
     # Disconnect and cleanup old client if present
     if DOMAIN in hass.data and "mqtt_client" in hass.data[DOMAIN]:
         old_client = hass.data[DOMAIN]["mqtt_client"]
@@ -55,22 +57,17 @@ async def async_setup(hass, config):
     # Create and connect new MQTT client
     mqtt = MQTTClient(broker, port, username, password)
     mqtt.connect()
-    hass.data.setdefault(DOMAIN, {})["mqtt_client"] = mqtt
-
-    # def on_disconnect(client, userdata, rc):
-    #     _LOGGER.error("MQTT client disconnected with rc=%s", rc)
-    # mqtt.client.on_disconnect = on_disconnect
-    # mqtt.client.connect(broker, port)
+    hass.data[DOMAIN]["mqtt_client"] = mqtt
 
     async def handle_test_publish(call):
         _LOGGER.warning("xbee_bridge: Test publish service called")
-        await hass.async_add_executor_job(mqtt.publish_constant_test)
+        await hass.async_add_executor_job(hass.data[DOMAIN]["mqtt_client"].publish_constant_test)
     hass.services.async_register(DOMAIN, "test_publish", handle_test_publish)
 
     ## Debug mode: only send test MQTT messages, skip XBee setup
     if debug_mode:
         _LOGGER.warning("Running in debug_mode: publishing constant test values.")
-        await hass.async_add_executor_job(mqtt.publish_constant_test)
+        await hass.async_add_executor_job(hass.data[DOMAIN]["mqtt_client"].publish_constant_test)
 
     ## Real mode: Use XBee device handler
     # 1. Only check device availability here
@@ -84,15 +81,19 @@ async def async_setup(hass, config):
         _LOGGER.error("xbee_bridge: Returning False from async_setup due to XBee device error")
         return False
 
-    # 2. XBee data callback
+    # 2. XBee data callback: always use latest mqtt_client from hass.data
+    # Called whenever new sensor data is available
+    # Publish each value to MQTT
     def xbee_data_callback(data):
-        # Called whenever new sensor data is available
-        # Publish each value to MQTT
         _LOGGER.warning(f"xbee_bridge: Received XBee data: {data}")
-        for key, value in data.items():
-            topic = f"home/sensors/xbee/{key}"
-            mqtt.client.publish(topic, str(value), retain=True)
-            _LOGGER.info(f"Published {key}: {value} to {topic}")
+        mqtt_client = hass.data[DOMAIN].get("mqtt_client")
+        if mqtt_client:
+            for key, value in data.items():
+                topic = f"home/sensors/xbee/{key}"
+                mqtt_client.client.publish(topic, str(value), retain=True)
+                _LOGGER.info(f"Published {key}: {value} to {topic}")
+        else:
+            _LOGGER.error("No mqtt_client available to publish data!")
 
     # 3. Helper to start handler
     def start_handler():
@@ -128,12 +129,25 @@ async def async_setup(hass, config):
     async def handle_reload(call):
         _LOGGER.warning("xbee_bridge: Reload service called")
         await hass.async_add_executor_job(stop_handler)
+
         # Disconnect MQTT client before restarting
         try:
-            mqtt.client.disconnect()
-            _LOGGER.info("Disconnected MQTT client.")
+            old_mqtt = hass.data[DOMAIN].get("mqtt_client")
+            if old_mqtt:
+                old_mqtt.disconnect()
+                _LOGGER.info("Disconnected old MQTT client.")
         except Exception as e:
             _LOGGER.error(f"Error disconnecting MQTT client: {e}")
+
+        # Re-create and connect new MQTT client using saved config
+        conf = hass.data[DOMAIN].get("config", {})
+        broker = conf.get("mqtt_broker", "localhost")
+        port = conf.get("mqtt_port", 1883)
+        username = conf.get("mqtt_user")
+        password = conf.get("mqtt_password")
+        new_mqtt = MQTTClient(broker, port, username, password)
+        new_mqtt.connect()
+        hass.data[DOMAIN]["mqtt_client"] = new_mqtt
 
         new_handler, new_thread, new_stop_event = await hass.async_add_executor_job(start_handler)
         hass.data[DOMAIN]["handler"] = new_handler
@@ -142,7 +156,6 @@ async def async_setup(hass, config):
         _LOGGER.info("xbee_bridge: Reload complete.")
 
     hass.services.async_register(DOMAIN, "reload", handle_reload)
-
 
     _LOGGER.warning("xbee_bridge: About to return True from async_setup")
     return True
