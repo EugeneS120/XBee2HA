@@ -3,7 +3,8 @@ from digi.xbee.devices import XBeeDevice, XBee64BitAddress
 from digi.xbee.io import IOLine, IOMode
 import struct
 import re
-from datetime import datetime, timezone
+from datetime import datetime   # , timezone
+from zoneinfo import ZoneInfo
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -117,7 +118,8 @@ class XBeeDeviceHandler:
                         self.data["dio2_ad2"] = formatted
                     _LOGGER.info(formatted)
                 # Save the sample time
-                self.data["sample_time"] = datetime.now(timezone.utc).isoformat()
+                # self.data["sample_time"] = datetime.now(timezone.utc).isoformat()
+                self.data["sample_time"] = datetime.now(tz=ZoneInfo('Asia/Jerusalem'))
                 _LOGGER.info("Sample time: %s", self.data["sample_time"])
                 # Call the external data callback if set
                 if self.data_callback:
