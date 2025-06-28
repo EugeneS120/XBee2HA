@@ -116,12 +116,14 @@ class XBeeDeviceHandler:
                         voltage = (value / 1023) * 3.3  # Assuming a 3.3V reference
                         formatted = f"{line}: {value} (approx. {voltage:.2f}V)"
                         # self.data["dio2_ad2"] = formatted
-                        self.data["dio2_ad2"] = "{voltage:.2f}V"
+                        self.data["dio2_ad2"] = f"{voltage:.2f}"
                     _LOGGER.info(formatted)
                 # Save the sample time
                 # self.data["sample_time"] = datetime.now(timezone.utc).isoformat()
-                self.data["sample_time"] = datetime.now(tz=ZoneInfo('Asia/Jerusalem'))
-                _LOGGER.info("Sample time: %s", self.data["sample_time"])
+                self.data["sample_time"] = datetime.now(tz=ZoneInfo('Asia/Jerusalem')).isoformat()
+                time2log = datetime.now(tz=ZoneInfo('Asia/Jerusalem'))
+                # _LOGGER.info("Sample time: %s", self.data["sample_time"])
+                _LOGGER.info("Sample time: %s", time2log)
                 # Call the external data callback if set
                 if self.data_callback:
                     try:
